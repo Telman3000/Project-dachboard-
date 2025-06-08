@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Analytics Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #1e1e2f; color: #f0f0f0; }
+    .navbar { background: #6f42c1 !important; }
+    .nav-tabs .nav-link { color: #19c1e4; }
+    .nav-tabs .nav-link.active { background: #6f42c1; color: #fff; }
+    .card { background: #2e2e42; border: none; }
+    .list-group-item { background: #3e3e5e; border: none; color: #ddd; }
+    /* если баннера нет — можно закомментировать следующий блок */
+    /* .home-banner img { width: 100%; height: auto; border-radius: .25rem; } */
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white" href="#">AI Analytics</a>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="tabs">
+      <li class="nav-item"><button class="nav-link active"    data-bs-target="#home"    data-bs-toggle="tab">Home</button></li>
+      <li class="nav-item"><button class="nav-link"           data-bs-target="#users"   data-bs-toggle="tab">Users</button></li>
+      <li class="nav-item"><button class="nav-link"           data-bs-target="#profile" data-bs-toggle="tab">Profile</button></li>
+      <li class="nav-item"><button class="nav-link"           data-bs-target="#progress"data-bs-toggle="tab">Progress</button></li>
+      <li class="nav-item"><button class="nav-link"           data-bs-target="#results" data-bs-toggle="tab">Results</button></li>
+      <li class="nav-item"><button class="nav-link"           data-bs-target="#share"   data-bs-toggle="tab">Share</button></li>
+    </ul>
+
+    <div class="tab-content mt-3">
+      <!-- Home -->
+      <div class="tab-pane fade show active" id="home">
+        <div class="row gy-4">
+          <div class="col-md-4">
+            <div class="card p-4 text-center">
+              <h4>Всего пользователей</h4>
+              <h1 id="userCount">0</h1>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="card p-4">
+              <h2>Добро пожаловать</h2>
+              <p>Начните с добавления первого пользователя во вкладке <strong>Users</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div class="tab-pane fade" id="users">
+        <div class="card p-4">
+          <h3>Добавить пользователя</h3>
+          <form id="user-form" class="row g-2 mb-3">
+            <div class="col"><input id="firstName" name="first_name" class="form-control" placeholder="Имя"     required></div>
+            <div class="col"><input id="lastName"  name="last_name"  class="form-control" placeholder="Фамилия" required></div>
+            <div class="col"><input id="email"     name="email"      class="form-control" placeholder="Email"    type="email" required></div>
+            <div class="col"><input id="age"       name="age"        class="form-control" placeholder="Возраст" type="number" min="0" required></div>
+            <div class="col">
+              <select id="gender" name="gender" class="form-select" required>
+                <option value="" disabled selected>Пол</option>
+                <option value="Male">Мужской</option>
+                <option value="Female">Женский</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-success">Добавить</button>
+            </div>
+          </form>
+          <ul id="user-list" class="list-group"></ul>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="tab-pane fade" id="profile">
+        <div class="card p-4">
+          <h3>Профиль</h3>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Имя:</strong>     <span id="profFirstName"></span></li>
+            <li class="list-group-item"><strong>Фамилия:</strong> <span id="profLastName"></span></li>
+            <li class="list-group-item"><strong>Email:</strong>   <span id="profEmail"></span></li>
+            <li class="list-group-item"><strong>Возраст:</strong>  <span id="profAge"></span></li>
+            <li class="list-group-item"><strong>Пол:</strong>      <span id="profGender"></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="tab-pane fade" id="progress">
+        <div class="card p-4">
+          <h3>Прогресс</h3>
+          <p>Здесь скоро появятся графики прогресса.</p>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="tab-pane fade" id="results">
+        <div class="card p-4">
+          <h3>Результаты</h3>
+          <p>Аналитические отчёты будут здесь.</p>
+        </div>
+      </div>
+
+      <!-- Share -->
+      <div class="tab-pane fade" id="share">
+        <div class="card p-4">
+          <h3>Share this Dashboard</h3>
+          <div class="input-group mb-2">
+            <input type="text" id="shareLink" class="form-control" readonly>
+            <button class="btn btn-primary" id="copyBtn">Copy</button>
+          </div>
+          <small class="text-muted">
+            Скопируйте эту ссылку и отправьте коллегам — они смогут регистрироваться на вашем публичном сервисе.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка для уведомлений -->
+  <div class="modal fade" id="notifyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header">
+          <h5 class="modal-title">Уведомление</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="modalMessage"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрипты -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Замените на свой ADMIN_TOKEN из бэкенда (.env)
+    const ADMIN_TOKEN = 'ВАШ_ADMIN_TOKEN';
+
+    let currentUser = null;
+
+    function showModal(msg) {
+      document.getElementById('modalMessage').textContent = msg;
+      new bootstrap.Modal(document.getElementById('notifyModal')).show();
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/users/', {
+        headers: { 'X-Admin-Token': ADMIN_TOKEN }
+      });
+      if (res.status === 403) return;
+      if (!res.ok) throw new Error('Ошибка получения списка пользователей');
+      const users = await res.json();
+      const list = document.getElementById('user-list');
+      list.innerHTML = '';
+      users.forEach(u => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = `${u.first_name} ${u.last_name} — ${u.email} (${u.age}, ${u.gender})`;
+        list.append(li);
+      });
+    }
+
+    async function loadUserCount() {
+      const res = await fetch('/api/users/');
+      if (!res.ok) return;
+      const users = await res.json();
+      document.getElementById('userCount').textContent = users.length;
+    }
+
+    function fillProfile() {
+      if (!currentUser) return;
+      document.getElementById('profFirstName').textContent = currentUser.first_name;
+      document.getElementById('profLastName').textContent  = currentUser.last_name;
+      document.getElementById('profEmail').textContent     = currentUser.email;
+      document.getElementById('profAge').textContent       = currentUser.age;
+      document.getElementById('profGender').textContent    = currentUser.gender;
+    }
+
+    async function createUser(payload) {
+      try {
+        const res = await fetch('/api/users/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 201) {
+          currentUser = await res.json();
+          fillProfile();
+          showModal('Пользователь успешно зарегистрирован');
+          loadUserCount().catch(()=>{});
+          loadUsers().catch(()=>{});
+        }
+        else if (res.status === 409) {
+          const err = await res.json();
+          showModal(err.detail || 'Пользователь уже существует');
+        }
+        else {
+          const err = await res.json().catch(()=>({detail: 'Ошибка'}));
+          showModal(err.detail);
+        }
+      } catch {
+        showModal('Сетевая ошибка');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // вместо window.location.href жёстко подставляем публичный URL вашего фронта:
+      const shareInput = document.getElementById('shareLink');
+      shareInput.value = 'https://<ваш-публичный-домен>';
+      document.getElementById('copyBtn').onclick = () =>
+        navigator.clipboard.writeText(shareInput.value)
+          .then(() => showModal('Ссылка скопирована в буфер'))
+          .catch(() => showModal('Не удалось скопировать'));
+
+      loadUserCount().catch(()=>{});
+      loadUsers().catch(()=>{});
+
+      document.getElementById('user-form').addEventListener('submit', e => {
+        e.preventDefault();
+        createUser({
+          first_name: document.getElementById('firstName').value,
+          last_name:  document.getElementById('lastName').value,
+          email:      document.getElementById('email').value,
+          age:        +document.getElementById('age').value,
+          gender:     document.getElementById('gender').value
+        });
+      });
+    });
+  </script>
+</body>
+</html>
