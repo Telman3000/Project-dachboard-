@@ -31,7 +31,7 @@ def metrics(request: Request) -> HTMLResponse:
     """
     # 1. Загружаем и подготавливаем данные
     learners_df = load_learners('namaz_learners_anon.json')
-    logs_df = load_logs('namaz_logs_anon (2).json')
+    logs_df = load_logs('namaz_logs_anon.json')
 
     # 2. Обновляем коллекцию users_raw
     update_raw_collection(learners_df)
