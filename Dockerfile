@@ -1,19 +1,14 @@
 FROM python:3.11-slim
 
+# 1) задаём рабочую директорию
 WORKDIR /app
 
-# Сначала копируем только requirements.txt, чтобы кэш Docker-а не сбрасывался при любом изменении кода
+# 2) копируем только список зависимостей и сразу ставим их
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Обновляем pip и ставим зависимости
-RUN pip install --upgrade pip \
- && pip install --no-cache-dir -r requirements.txt
-
-# Копируем весь код
+# 3) копируем весь проект (main.py, templates/, *.json и пр.)
 COPY . .
 
-# отмечаем, что внутри контейнера мы слушаем 8000-й порт
-EXPOSE 8000  
-
-# запускаем Uvicorn на 0.0.0.0:8000
+# 4) по-умолчанию запускаем Uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
