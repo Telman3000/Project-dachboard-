@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from fastapi import FastAPI, Request  # убрали Form, т.к. маршруты выбора пользователей удалены
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
