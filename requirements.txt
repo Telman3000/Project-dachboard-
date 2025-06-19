@@ -28,6 +28,9 @@ starlette==0.46.2
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 tzdata==2025.2
-uvicorn==0.34.3
+uvicorn[standard]
 watchfiles==1.1.0
 websockets==15.0.1
+
+email-validator
+
