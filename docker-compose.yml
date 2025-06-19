@@ -1,20 +1,33 @@
+# ./docker-compose.yml
 version: '3.8'
+
 services:
   mongodb:
     image: mongo:6.0
-    volumes:
-      - mongo-data:/data/db
+    container_name: dashboard_mongodb
+    restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "27017:27017"      # если хотите обратиться к БД извне
+    networks:
+      - dashboard-net
 
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dashboard_api
+    restart: unless-stopped
     depends_on:
       - mongodb
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017/dashboard
     ports:
       - "8000:8000"
+    environment:
+      MONGO_URI: "mongodb://mongodb:27017/dashboard"
+      PORT: "8000"
+    networks:
+      - dashboard-net
+    command: uvicorn main:app --host 0.0.0.0 --port ${PORT}
 
-volumes:
-  mongo-data:
+networks:
+  dashboard-net:
+    driver: bridge
