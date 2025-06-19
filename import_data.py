@@ -1,80 +1,56 @@
-import os
-import glob
+#!/usr/bin/env python3
+import argparse
 import json
 import csv
 from pymongo import MongoClient
 
-# -------------------------------------------------------------------
-# Настройки подключения к MongoDB
-# -------------------------------------------------------------------
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
-DB_NAME   = 'namaz_db'
+def load_json(path):
+    with open(path, encoding='utf-8') as f:
+        return json.load(f)
 
-client = MongoClient(MONGO_URI)
-db     = client[DB_NAME]
+def load_csv(path):
+    with open(path, encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        return list(reader)
 
-# -------------------------------------------------------------------
-# 1) Загрузка пользователей (learners)
-# -------------------------------------------------------------------
-learners_path = 'namaz_learners_anon.json'
-with open(learners_path, encoding='utf-8') as f:
-    learners = json.load(f)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mongo-uri', required=True, help='MongoDB URI, e.g. mongodb://localhost:27017/dashboard')
+    args = parser.parse_args()
 
-col_learners = db['users_learners']
-col_learners.delete_many({})          # очистка коллекции
-col_learners.insert_many(learners)    # вставка всех документов
-print(f"✔ Loaded {len(learners)} documents into 'users_learners'")
+    client = MongoClient(args.mongo_uri)
+    db = client.get_default_database()
 
-# -------------------------------------------------------------------
-# 2) Загрузка логов (logs)
-# -------------------------------------------------------------------
-# ищем любой файл namaz_logs_anon*.json
-log_candidates = glob.glob('namaz_logs_anon*.json')
-if not log_candidates:
-    raise FileNotFoundError("Не найден файл namaz_logs_anon*.json")
-logs_path = log_candidates[0]
+    # 1. users_learners
+    users_learners = load_json('namaz_learners_anon.json')
+    for doc in users_learners:
+        # **ГАРАНТИЯ** поля recommendation_method
+        if 'recommendation_method' not in doc:
+            doc['recommendation_method'] = None
+        db.users_learners.replace_one({'_id': doc['_id']}, doc, upsert=True)
+    print(f"✔ Loaded {len(users_learners)} documents into 'users_learners'")
 
-with open(logs_path, encoding='utf-8-sig') as f:
-    logs = json.load(f)
+    # 2. users_logs
+    users_logs = load_json('namaz_logs_anon.json')
+    for doc in users_logs:
+        if 'recommendation_method' not in doc:
+            doc['recommendation_method'] = None
+        db.users_logs.replace_one({'_id': doc['_id']}, doc, upsert=True)
+    print(f"✔ Loaded {len(users_logs)} documents into 'users_logs'")
 
-col_logs = db['users_logs']
-col_logs.delete_many({})
-col_logs.insert_many(logs)
-print(f"✔ Loaded {len(logs)} documents into 'users_logs' (from '{logs_path}')")
+    # 3. outcomes
+    outcomes = load_csv('namaz_outcomes.csv')
+    for rec in outcomes:
+        db.outcomes.replace_one({'id': rec['id']}, rec, upsert=True)
+    print(f"✔ Loaded {len(outcomes)} records into 'outcomes'")
 
-# -------------------------------------------------------------------
-# 3) Загрузка результатов оценок (outcomes)
-# -------------------------------------------------------------------
-outcomes_path = 'namaz_outcomes.csv'
-col_outcomes  = db['outcomes']
-col_outcomes.delete_many({})
+    # 4. app_structure
+    app_struct = load_json('app_structure.json')
+    for doc in app_struct:
+        db.app_structure.replace_one({'_id': doc['_id']}, doc, upsert=True)
+    print(f"✔ Loaded {len(app_struct)} documents into 'app_structure'")
 
-with open(outcomes_path, encoding='utf-8') as f:
-    reader   = csv.DictReader(f)
-    outcomes = [row for row in reader]
+    print("\n✅ All data successfully imported into MongoDB.")
 
-col_outcomes.insert_many(outcomes)
-print(f"✔ Loaded {len(outcomes)} records into 'outcomes'")
-
-# -------------------------------------------------------------------
-# 4) Загрузка структуры приложения (app_structure)
-# -------------------------------------------------------------------
-structure_path = 'app_structure.json'
-with open(structure_path, encoding='utf-8') as f:
-    structure = json.load(f)
-
-col_app_struct = db['app_structure']
-col_app_struct.delete_many({})
-
-# Если структура — список документов, вставляем их все
-if isinstance(structure, list):
-    col_app_struct.insert_many(structure)
-    print(f"✔ Loaded {len(structure)} documents into 'app_structure'")
-# Если структура — один объект (словарь), вставляем единичный документ
-elif isinstance(structure, dict):
-    col_app_struct.insert_one(structure)
-    print("✔ Loaded 1 document into 'app_structure'")
-else:
-    raise TypeError("app_structure.json должен быть либо списком, либо словарём")
-
-print("\n✅ All data successfully imported into MongoDB.")
+if __name__ == '__main__':
+    main()
