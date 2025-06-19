@@ -1,56 +1,48 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import argparse
 import json
 import csv
 from pymongo import MongoClient
 
-def load_json(path):
-    with open(path, encoding='utf-8') as f:
-        return json.load(f)
+def load_json_collection(db, filename, collection_name):
+    with open(filename, 'r', encoding='utf-8') as f:
+        docs = json.load(f)
+    col = db[collection_name]
+    col.drop()
+    col.insert_many(docs)
+    print(f"✔ Loaded {len(docs)} documents into '{collection_name}'")
 
-def load_csv(path):
-    with open(path, encoding='utf-8') as f:
+def load_csv_collection(db, filename, collection_name):
+    with open(filename, encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        return list(reader)
+        docs = list(reader)
+    col = db[collection_name]
+    col.drop()
+    col.insert_many(docs)
+    print(f"✔ Loaded {len(docs)} records into '{collection_name}'")
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mongo-uri', required=True, help='MongoDB URI, e.g. mongodb://localhost:27017/dashboard')
-    args = parser.parse_args()
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--mongo-uri", required=True)
+    args = p.parse_args()
 
     client = MongoClient(args.mongo_uri)
     db = client.get_default_database()
 
-    # 1. users_learners
-    users_learners = load_json('namaz_learners_anon.json')
-    for doc in users_learners:
-        # **ГАРАНТИЯ** поля recommendation_method
-        if 'recommendation_method' not in doc:
-            doc['recommendation_method'] = None
-        db.users_learners.replace_one({'_id': doc['_id']}, doc, upsert=True)
-    print(f"✔ Loaded {len(users_learners)} documents into 'users_learners'")
+    # Загрузить ваши JSON/CSV файлы
+    load_json_collection(db, "namaz_learners_anon.json", "users_learners")
+    load_json_collection(db, "namaz_logs_anon.json",     "users_logs")
+    load_csv_collection(db,  "namaz_outcomes.csv",       "outcomes")
+    load_json_collection(db, "app_structure.json",       "app_structure")
 
-    # 2. users_logs
-    users_logs = load_json('namaz_logs_anon.json')
-    for doc in users_logs:
-        if 'recommendation_method' not in doc:
-            doc['recommendation_method'] = None
-        db.users_logs.replace_one({'_id': doc['_id']}, doc, upsert=True)
-    print(f"✔ Loaded {len(users_logs)} documents into 'users_logs'")
+    # Гарантируем, что у каждого пользователя есть поле recommendation_method
+    users = db.users_learners.find({})
+    for u in users:
+        if "recommendation_method" not in u:
+            db.users_learners.update_one(
+                {"_id": u["_id"]},
+                {"$set": {"recommendation_method": None}}
+            )
+    print("✔ Filled missing 'recommendation_method' with None")
 
-    # 3. outcomes
-    outcomes = load_csv('namaz_outcomes.csv')
-    for rec in outcomes:
-        db.outcomes.replace_one({'id': rec['id']}, rec, upsert=True)
-    print(f"✔ Loaded {len(outcomes)} records into 'outcomes'")
-
-    # 4. app_structure
-    app_struct = load_json('app_structure.json')
-    for doc in app_struct:
-        db.app_structure.replace_one({'_id': doc['_id']}, doc, upsert=True)
-    print(f"✔ Loaded {len(app_struct)} documents into 'app_structure'")
-
-    print("\n✅ All data successfully imported into MongoDB.")
-
-if __name__ == '__main__':
-    main()
+    print("✅ All data successfully imported into MongoDB.")
