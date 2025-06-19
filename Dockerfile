@@ -1,24 +1,31 @@
-# Dockerfile
-# 1. Берём лёгкий Python
+# Используем slim-образ Python 3.11
 FROM python:3.11-slim
 
-# 2. Рабочая директория внутри контейнера
+# Рабочая директория приложения
 WORKDIR /app
 
-# 3. Копируем и устанавливаем зависимости
+# Копируем список зависимостей и ставим их
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Копируем приложение и шаблоны
+# Копируем код
 COPY main.py .
+COPY import_data.py .
+COPY namaz_learners_anon.json .
+COPY namaz_logs_anon.json .
+COPY namaz_outcomes.csv .
+COPY app_structure.json .
 COPY templates/ ./templates/
 
-# 5. Переменные по умолчанию (можно переопределить при запуске)
-ENV MONGO_URI="mongodb://mongodb:27017/"  
+# Переменные окружения
+ENV MONGO_URI="mongodb://mongodb:27017/dashboard"
 ENV PORT=8000
 
-# 6. Открываем порт
+# Открываем порт
 EXPOSE 8000
 
-# 7. Точка входа — main.py сам поднимет gunicorn в продакшене или uvicorn локально
-CMD ["python", "main.py"]
+# Запускаем через Gunicorn+UvicornWorker
+CMD ["gunicorn", "main:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:8000", \
+     "--log-level", "info"]
