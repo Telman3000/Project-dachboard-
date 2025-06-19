@@ -1,54 +1,50 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Metrics Results</title>
+  <meta charset="UTF-8" />
+  <title>Dynamic Metrics Table</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      margin: 0;
-      background: #f4f4f4;
-    }
-    h1 {
-      margin-bottom: 1rem;
-    }
-    .table-container {
-      overflow-x: auto;
-      background: white;
-      padding: 1rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-    }
-    th, td {
-      padding: 0.5rem 1rem;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #efefef;
-    }
-    a.back {
-      display: inline-block;
-      margin-top: 1rem;
-      color: #007bff;
-      text-decoration: none;
-    }
-    a.back:hover {
-      text-decoration: underline;
-    }
+    body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding-top: 100px; }
+    button { background: #0069d9; color: #fff; border: none; padding: 1em 2em; font-size: 1.2em; cursor: pointer; border-radius: 5px; }
+    table { margin: 2em auto; border-collapse: collapse; width: 80%; }
+    th, td { padding: 0.5em 1em; border: 1px solid #444; }
   </style>
 </head>
 <body>
-  <h1>Metrics by Group</h1>
-  <div class="table-container">
-    {{ table | safe }}
-  </div>
-  <a href="/" class="back">&larr; Back</a>
+  <h1>Dynamic Metrics Table</h1>
+  <label>
+    Start date: <input type="date" id="start" value="2025-01-01"/>
+  </label>
+  <label>
+    End date: <input type="date" id="end" value="2025-06-19"/>
+  </label>
+  <br/><br/>
+  <button id="btn">Create</button>
+
+  <div id="table"></div>
+
+  <script>
+    document.getElementById("btn").onclick = async () => {
+      const s = document.getElementById("start").value;
+      const e = document.getElementById("end").value;
+      const res = await fetch(`/metrics?start_date=${s}&end_date=${e}`);
+      const data = await res.json();
+      if (res.status !== 200) {
+        document.getElementById("table").innerText = "Ошибка: " + data.detail;
+        return;
+      }
+      let html = `<table>
+        <tr><th>Метрика</th><th>Значение</th></tr>
+        <tr><td>Total learners</td><td>${data.total_learners}</td></tr>
+        <tr><td>Total logs</td><td>${data.total_logs}</td></tr>
+        <tr><td>Total outcomes</td><td>${data.total_outcomes}</td></tr>
+        <tr><td colspan="2"><b>By recommendation_method</b></td></tr>`;
+      for (const [method, cnt] of Object.entries(data.learners_by_method)) {
+        html += `<tr><td>${method}</td><td>${cnt}</td></tr>`;
+      }
+      html += `</table>`;
+      document.getElementById("table").innerHTML = html;
+    };
+  </script>
 </body>
 </html>
