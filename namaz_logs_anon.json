@@ -1,0 +1,31 @@
+[
+  {
+    "_id": "s56LN/f+QECg/YHDIBTiRA==",
+    "learner_id": "5985",
+    "activity_id": "launch",
+    "type": "event",
+    "value": "1",
+    "start_date": "2025-06-02T08:47:49.655000",
+    "completion_date": "2025-06-02T08:47:49.655000",
+    "build_version": "239"
+  },
+  {
+    "_id": "FvhhuczPQoatJrQWzBXweA==",
+    "learner_id": "5985",
+    "activity_id": "onboarding",
+    "type": "event",
+    "value": "1",
+    "start_date": "2025-06-02T08:47:50.516000",
+    "completion_date": "2025-06-02T08:47:53.481000",
+    "build_version": "239"
+  },
+  {
+    "_id": "USDgMDmnR3qIBO5DmSh95w==",
+    "learner_id": "5985",
+    "activity_id": "dhuhr_fard",
+    "type": "fard_prayer",
+    "value": "0",
+    "start_date": "2025-06-02T08:47:59.813000",
+    "completion_date": "2025-06-02T08:47:59.813000",
+    "build_version": "239"
+  }]
