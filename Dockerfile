@@ -1,30 +1,24 @@
 # Dockerfile
-# ======================
-# 1) Базовый образ с минимальным Python
+# 1. Берём лёгкий Python
 FROM python:3.11-slim
 
-# 2) Рабочая директория внутри контейнера
+# 2. Рабочая директория внутри контейнера
 WORKDIR /app
 
-# 3) Сначала копируем только файл с зависимостями,
-#    чтобы Docker-кэш работал эффективнее
+# 3. Копируем и устанавливаем зависимости
 COPY requirements.txt .
-
-# 4) Устанавливаем все зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5) Копируем в контейнер:
-#    - основной код приложения
-#    - папку с шаблонами (templates/index.html, metrics.html и т.д.)
-COPY main.py . 
+# 4. Копируем приложение и шаблоны
+COPY main.py .
 COPY templates/ ./templates/
 
-# 6) Переменная окружения (по умолчанию локальный MongoDB)
-ENV MONGO_URI="mongodb://mongodb:27017/"
+# 5. Переменные по умолчанию (можно переопределить при запуске)
+ENV MONGO_URI="mongodb://mongodb:27017/"  
 ENV PORT=8000
 
-# 7) Открываем порт
+# 6. Открываем порт
 EXPOSE 8000
 
-# 8) Точка входа — наш main.py сам решит, uvicorn (Windows) или Gunicorn (Linux)
+# 7. Точка входа — main.py сам поднимет gunicorn в продакшене или uvicorn локально
 CMD ["python", "main.py"]
