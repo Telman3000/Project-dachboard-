@@ -1,31 +1,21 @@
-# Используем slim-образ Python 3.11
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
-# Рабочая директория приложения
 WORKDIR /app
 
-# Копируем список зависимостей и ставим их
+# Скопировать только requirements и установить зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код
-COPY main.py .
-COPY import_data.py .
-COPY namaz_learners_anon.json .
-COPY namaz_logs_anon.json .
-COPY namaz_outcomes.csv .
-COPY app_structure.json .
-COPY templates/ ./templates/
+# Скопировать всё приложение
+COPY . .
 
 # Переменные окружения
 ENV MONGO_URI="mongodb://mongodb:27017/dashboard"
 ENV PORT=8000
 
-# Открываем порт
+# Порт, на котором будет слушать Uvicorn
 EXPOSE 8000
 
-# Запускаем через Gunicorn+UvicornWorker
-CMD ["gunicorn", "main:app", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000", \
-     "--log-level", "info"]
+# Запускаем Uvicorn (не gunicorn — с ним были проблемы с ASGI)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
